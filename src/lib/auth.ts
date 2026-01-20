@@ -1,20 +1,25 @@
+import "dotenv/config"; // MUST be first line
+
 import { betterAuth } from "better-auth";
-import { prismaAdapter } from "@better-auth/prisma-adapter";
-import { prismaCli } from "@/lib/prisma-cli";
+import { prismaAdapter } from "better-auth/adapters/prisma";
 
+import { prisma } from "@/lib/prisma";
+import { sendEmail } from "@/app/actions/sendEmail";
 export const auth = betterAuth({
-  database: prismaAdapter(prismaCli),
-
-  emailAndPassword: {
-    enabled: false,
+  database: prismaAdapter(prisma, {
+    provider: "postgresql",
+  }),
+   emailVerification: {
+    sendVerificationEmail: async ( { user, url, token }, request) => {
+      void sendEmail({
+        to: user.email,
+        subject: "Verify your email address",
+        text: `Click the link to verify your email: ${url}`,
+      });
+    },
   },
-
-  emailVerification: {
+  emailAndPassword:{
     enabled: true,
-    sendOnSignUp: true,
-  },
-
-  magicLink: {
-    enabled: true,
-  },
+    requireEmailVerification: true,
+  }
 });
