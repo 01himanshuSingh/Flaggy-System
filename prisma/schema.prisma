@@ -19,6 +19,7 @@ model User {
   memberships ProjectMember[]
   ownedProjects Project[] @relation("ProjectOwner")
   changedFlags FeatureFlagVersion[] 
+  auditLogs   AuditLog[]
 
 
   sessions      Session[]
@@ -102,6 +103,8 @@ model Project {
   roles        ProjectRole[]
   environments Environment[]
   flags        FeatureFlag[]
+  @@index([ownerId])
+   @@index([ownerId, createdAt])
 }
 
 //////////////////////////
@@ -175,48 +178,93 @@ model Environment {
   type      EnvironmentType
   projectId String
 
-  project Project      @relation(fields: [projectId], references: [id])
-  flags   FeatureFlag[]
+  project Project @relation(fields: [projectId], references: [id])
+
+  featureSettings FeatureFlagEnvironment[]
 
   @@unique([type, projectId])
 }
+
 
 //////////////////////////
 // FEATURE FLAG (CURRENT STATE)
 //////////////////////////
 
 model FeatureFlag {
+  id          String   @id @default(uuid())
+  key         String
+  projectId   String
+  description String?
+  valueType   String   // boolean | string | number | json
+  archived    Boolean  @default(false)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  project     Project @relation(fields: [projectId], references: [id])
+  
+  environments FeatureFlagEnvironment[]
+  versions     FeatureFlagVersion[]
+  FeatureExperiments FeatureExperiment[]
+  @@unique([key, projectId])
+}
+
+model FeatureFlagEnvironment {
   id            String   @id @default(uuid())
-  key           String
-  projectId     String
+  featureFlagId String
   environmentId String
 
   enabled       Boolean  @default(false)
-  defaultValue  Boolean  @default(false)
+  value         Json?
+  rollout       Int?     // percentage rollout (0–100)
+  rules         Json?    // targeting rules
+  schedule      Json?    // time-based enable/disable
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  featureFlag FeatureFlag @relation(fields: [featureFlagId], references: [id], onDelete: Cascade)
+  environment Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
 
-  project     Project     @relation(fields: [projectId], references: [id])
-  environment Environment @relation(fields: [environmentId], references: [id])
-
-  versions FeatureFlagVersion[]
-
-  @@unique([key, environmentId])
+  @@unique([featureFlagId, environmentId])
 }
+
 
 //////////////////////////
 // FEATURE FLAG VERSION (ROLLBACK + AUDIT)
 //////////////////////////
 
-model FeatureFlagVersion {
-  id          String   @id @default(uuid())
-  flagId      String
-  value       Boolean
-  changedById String
-  reason      String?
-  createdAt   DateTime @default(now())
 
-  flag      FeatureFlag @relation(fields: [flagId], references: [id], onDelete: Cascade)
-  changedBy User        @relation(fields: [changedById], references: [id])
+model FeatureFlagVersion {
+  id            String   @id @default(uuid())
+  featureFlagId String
+  version       Int
+  snapshot      Json     // full config snapshot
+  changedById   String
+  reason        String?
+  createdAt     DateTime @default(now())
+
+  featureFlag FeatureFlag @relation(fields: [featureFlagId], references: [id], onDelete: Cascade)
+  changedBy   User        @relation(fields: [changedById], references: [id])
+
+  @@unique([featureFlagId, version])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  event     String
+  entity    String
+  entityId  String
+  actorId  String
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  actor User @relation(fields: [actorId], references: [id])
+}
+
+model FeatureExperiment {
+  id            String   @id @default(uuid())
+  featureFlagId String
+  name          String
+  variants      Json
+  enabled       Boolean @default(false)
+
+  featureFlag FeatureFlag @relation(fields: [featureFlagId], references: [id])
 }

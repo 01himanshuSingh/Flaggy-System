@@ -7,5 +7,6 @@ export default function UserClient() {
 
   if (isLoading) return <p>Loading...</p>;
 
-  return <p>Hello {user?.email}</p>;
+  return <p>Hello {user?.email}   Your landing page </p>;
+
 }
