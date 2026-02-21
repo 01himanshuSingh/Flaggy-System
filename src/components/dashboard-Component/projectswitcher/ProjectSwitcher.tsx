@@ -14,8 +14,12 @@ import {
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu'
 import { useRouter } from 'next/navigation'
+import { useDispatch } from 'react-redux'
+import { openDialog } from '@/app/store/dialogSlice'
+import CreateProjectDialog from '../create-project-dialogbox/CreateProjectDialog'
 export default function ProjectSwitcher() {
   const { projects, loading, error } = useProjects()
+  const dispatch = useDispatch()
   const { selectedProject, setSelectedProject } = useProjectContext()
 
   const projectList = useMemo(() => projects, [projects])
@@ -87,14 +91,15 @@ const router = useRouter()
       See All Projects
     </Button>
 
-    <Button
-      variant="outline"
-      className="w-full justify-start"
-      onClick={() => router.push('/dashboard/projects/new')}
-    >
-      <Plus size={16} className="mr-2" />
-      Create Project
-    </Button>
+   <Button
+  variant="outline"
+  className="w-full justify-start"
+  onClick={() => dispatch(openDialog())}
+>
+  <Plus size={16} className="mr-2" />
+  Create Project
+</Button>
+<CreateProjectDialog/>
   </div>
 
 </DropdownMenuContent>

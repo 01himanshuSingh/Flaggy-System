@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { auditLog } from "@/lib/audit";
 import { FeatureAlreadyExistsError } from "../serverError/FeatureAlreadyExistsError";
+import { invalidateProjectFlagsCache } from "../getfeatureflagproject/invalidateProjectFlagsCache";
 
 export async function createFeatureFlag({
   projectId,
@@ -70,7 +71,7 @@ function buildInitialSnapshot(feature:any, environments:any[]) {
         reason: "Initial creation",
       },
     });
-
+await invalidateProjectFlagsCache(projectId);
     auditLog({
       event: "feature.create",
       actorId,

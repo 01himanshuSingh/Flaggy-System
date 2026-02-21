@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
+
 type Project = {
   id: string
   name: string
@@ -20,6 +21,7 @@ async function fetchProjects(page = 1, limit = 20): Promise<ProjectResponse> {
 
   if (!res.ok) {
     const message = await res.text()
+    toast.error("Failed to fetch projects: " + (message || res.statusText))
     throw new Error(message || "Failed to fetch projects")
   }
 
@@ -30,8 +32,12 @@ export function useProjects(page = 1, limit = 20) {
   const query = useQuery<ProjectResponse>({
     queryKey: ['projects', page, limit],
     queryFn: () => fetchProjects(page, limit),
-    staleTime: 1000 * 60 * 5,
-    refetchOnWindowFocus: false,
+     staleTime: 1000 * 60 * 5,              // Data fresh for 5 minutes
+    gcTime: 1000 * 60 * 10,                // Cache kept for 10 minutes
+    refetchOnWindowFocus: false,           // Do not auto-refetch on tab focus
+    refetchOnReconnect: true,              // Refetch when internet reconnects
+    refetchOnMount: false,   
+    
   })
 
   return {

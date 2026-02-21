@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import redis from "@/lib/redis";
 import { getCurrentUser } from "@/lib/hook/server/useUser";
 import { auditLog } from "@/lib/audit";
+import { invalidateUserProjectsCache } from "@/lib/hook/server/createprojectcacheInvalidation";
 
 type CreateProjectBody = {
   name: string;
@@ -114,7 +115,8 @@ export async function POST(req: Request) {
           roleId: adminRole.id,
         },
       });
-
+      
+      await invalidateUserProjectsCache(userId)
       return {
         projectId: project.id,
         projectName: project.name,

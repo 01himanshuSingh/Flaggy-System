@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Providers from "./provider";
 import { Toaster } from "sonner";
+import ReduxProvider from "./store/StoreProvider";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -29,9 +30,12 @@ export default async function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-       <Providers>{children}
-        
+       <Providers>
+        <ReduxProvider>
+        {children}
+
         <Toaster richColors position="top-center" />
+        </ReduxProvider>
         </Providers> 
       </body>
     </html>
