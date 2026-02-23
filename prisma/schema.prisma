@@ -21,6 +21,7 @@ model User {
   changedFlags FeatureFlagVersion[] 
   auditLogs   AuditLog[]
 
+featureflag FeatureFlag[]
 
   sessions      Session[]
   accounts      Account[]
@@ -189,24 +190,41 @@ model Environment {
 //////////////////////////
 // FEATURE FLAG (CURRENT STATE)
 //////////////////////////
+enum FeatureLifecycle {
+  draft
+  active
+  deprecated
+  archived
+}
 
 model FeatureFlag {
   id          String   @id @default(uuid())
   key         String
   projectId   String
   description String?
-  valueType   String   // boolean | string | number | json
+  valueType   String
   archived    Boolean  @default(false)
+  createdById String
+
+  // ⭐ lifecycle (explained below)
+  lifecycle FeatureLifecycle @default(active)
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  createdBy   User    @relation(fields: [createdById], references: [id])
   project     Project @relation(fields: [projectId], references: [id])
-  
+
   environments FeatureFlagEnvironment[]
   versions     FeatureFlagVersion[]
   FeatureExperiments FeatureExperiment[]
+
   @@unique([key, projectId])
+
+  // ⭐ INDEXES (important)
+  @@index([projectId])
+  @@index([createdById])
+  @@index([projectId, archived])
 }
 
 model FeatureFlagEnvironment {

@@ -41,7 +41,9 @@ function buildInitialSnapshot(feature:any, environments:any[]) {
     }
 
     const feature = await tx.featureFlag.create({
-      data: { key, description, valueType, projectId },
+      data: { key, description, valueType, projectId , 
+        createdById: actorId
+      },
     });
 
     const environments = await tx.environment.findMany({

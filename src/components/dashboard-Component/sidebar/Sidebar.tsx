@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils'
 import { menuItems } from './MenuData'
 import dynamic from 'next/dynamic'
 import ProjectSwitcher from '@/components/dashboard-Component/projectswitcher/ProjectSwitcher'
+import { useLayout } from '@/app/(dashboard)/dashboard/Layout-context'
 
 export default function Sidebar() {
   const pathname = usePathname()
@@ -26,7 +27,9 @@ export default function Sidebar() {
 )
 
   const [isMobileOpen, setIsMobileOpen] = useState(false)
-  const [isCollapsed, setIsCollapsed] = useState(false)
+  // const [isCollapsed, setIsCollapsed] = useState(false)
+
+const { isCollapsed, toggleCollapse } = useLayout()
   const [searchQuery, setSearchQuery] = useState('')
 
   // optimized filtering
@@ -68,7 +71,7 @@ export default function Sidebar() {
 
           {/* Desktop Collapse Toggle */}
           <div className="flex justify-end p-2">
-            <button onClick={() => setIsCollapsed(!isCollapsed)}>
+            <button onClick={toggleCollapse}>
               <ChevronLeft
                 size={20}
                 className={cn(isCollapsed && "rotate-180")}

@@ -25,6 +25,7 @@ export async function findProjectFlags(
         id: true,
         key: true,
         valueType: true,
+        
 
         environments: {
           select: {

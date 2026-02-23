@@ -4,6 +4,7 @@ import "./globals.css";
 import Providers from "./provider";
 import { Toaster } from "sonner";
 import ReduxProvider from "./store/StoreProvider";
+import { ProjectProvider } from "@/components/dashboard-Component/projectswitcher/ProjectProvider";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -30,6 +31,9 @@ export default async function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+
+            {/* <ProjectProvider> */}
+
        <Providers>
         <ReduxProvider>
         {children}
@@ -37,6 +41,7 @@ export default async function RootLayout({
         <Toaster richColors position="top-center" />
         </ReduxProvider>
         </Providers> 
+            {/* </ProjectProvider> */}
       </body>
     </html>
   );

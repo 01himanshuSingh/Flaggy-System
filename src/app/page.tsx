@@ -1,12 +1,19 @@
-"use client";
+import { redirect } from "next/navigation"
+import { getCurrentUser } from "@/lib/hook/server/useUser"
+import { getUserFirstProject } from "@/lib/hook/server/FindFirstProject/projectFindFirst.service"
+import NoProjectPage from "@/components/NoDataFound/NoProjectFound"
 
-import { useUser } from "@/lib/hook/useUser";
 
-export default function UserClient() {
-  const { user, isLoading } = useUser();
+export default async function DashboardPage() {
+  const user = await getCurrentUser()
 
-  if (isLoading) return <p>Loading...</p>;
+  if (!user) redirect("/login")
 
-  return <p>Hello {user?.email}   Your landing page </p>;
+  const project = await getUserFirstProject(user.id)
 
+  if (project) {
+    redirect(`/dashboard/${project.id}/project`)
+  }
+
+  return redirect("/dashboard/createproject")
 }
