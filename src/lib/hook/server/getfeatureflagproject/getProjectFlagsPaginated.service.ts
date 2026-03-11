@@ -1,63 +1,72 @@
 import redis from "@/lib/redis"
-import { refreshFlagsCacheSafe } from "./refreshProjectFlagsCacheSafe"
 import { findProjectFlags } from "./findProjectFlag.repository"
 import { prefetchNextFlagsPage } from "./prefetchNextFlagsPage.service"
+import { refreshFlagsCacheSafe } from "./refreshProjectFlagsCacheSafe"
+
 export async function getProjectFlagsPaginated(
   projectId: string,
-  page: number,
-  limit: number
+  limit: number,
+  cursor?: string
 ) {
-  const cacheKey =
-    `project:flags:${projectId}:page:${page}:limit:${limit}`
+  const cacheKey = `project:flags:${projectId}:cursor:${cursor ?? "start"}:limit:${limit}`
 
   /* -------------------------
-     1️⃣ Try Redis cache
+     1️⃣ Redis Cache Check
   -------------------------- */
+
   const cached = await redis.get(cacheKey)
 
   if (cached) {
     const parsed = JSON.parse(cached)
-
-    // non-blocking background refresh
-    refreshFlagsCacheSafe(projectId, page, limit)
+       void refreshFlagsCacheSafe(
+      projectId,
+      limit,
+      cursor
+    )
 
     return parsed
+
   }
 
   /* -------------------------
-     2️⃣ Pagination calculation
+     2️⃣ Fetch from DB
   -------------------------- */
-  const skip = (page - 1) * limit
 
-  /* -------------------------
-     3️⃣ Fetch from DB
-  -------------------------- */
-  const { flags, totalCount } =
-    await findProjectFlags(projectId, skip, limit)
-
-  const totalPages = Math.ceil(totalCount / limit)
+  const { flags, hasMore, nextCursor } =
+    await findProjectFlags(projectId, limit, cursor)
 
   const result = {
     data: flags,
-    page,
-    totalPages,
-    totalCount,
+    nextCursor,
+    hasMore,
   }
 
   /* -------------------------
-     4️⃣ Store in Redis
+     3️⃣ Cache Result (Pipeline)
   -------------------------- */
-  await redis.set(cacheKey, JSON.stringify(result), "EX", 300)
+
+  const pipeline = redis.pipeline()
+
+  pipeline.set(
+    cacheKey,
+    JSON.stringify(result),
+    "EX",
+    300
+  )
+
+  await pipeline.exec()
 
   /* -------------------------
-     5️⃣ Prefetch next page
+     4️⃣ Prefetch Next Page
   -------------------------- */
-  prefetchNextFlagsPage(
-    projectId,
-    page + 1,
-    limit,
-    totalPages
-  )
+
+  if (hasMore && nextCursor) {
+    void prefetchNextFlagsPage(
+      projectId,
+      limit,
+      nextCursor
+    )
+  }
 
   return result
 }

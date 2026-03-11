@@ -24,6 +24,7 @@ function buildInitialSnapshot(feature:any, environments:any[]) {
     valueType: feature.valueType,
     environments: environments.map(e => ({
       environmentId: e.id,
+      
       enabled: false,
     })),
   };
@@ -58,6 +59,7 @@ function buildInitialSnapshot(feature:any, environments:any[]) {
       data: environments.map(env => ({
         featureFlagId: feature.id,
         environmentId: env.id,
+        
         enabled: false,
       })),
     });

@@ -224,6 +224,8 @@ model FeatureFlag {
   // ⭐ INDEXES (important)
   @@index([projectId])
   @@index([createdById])
+
+  @@index([projectId,  createdAt(sort: Desc)])
   @@index([projectId, archived])
 }
 

@@ -1,12 +1,14 @@
-
-import FlagDashboard from '@/components/flagDashboard/FlagDashboard'
-import React from 'react'
+'use client'
+import ActiveFeatureFlagDashboard from "./component/ActiveFeatureFlagDashboard"
 
 function page() {
   return (
     <div>
-        <FlagDashboard/>
-        page</div>
+        {/* <FlagDashboard/> */}
+        
+        <ActiveFeatureFlagDashboard/>
+       
+        </div>
   )
 }
 

@@ -1,7 +1,5 @@
-
-import { getUserHashPercentage } from "../hook/utils/hashRollout";
-import { EvaluationContext } from "../types/evaluationcontext";
-
+import { EvaluationContext } from "@/lib/types/evaluationcontext";
+import { getUserHashPercentage } from "../../utils/hashRollout";
 
 export function evaluateRollout(
   rolloutPercentage: number | null,

@@ -3,86 +3,92 @@ import { findProjectFlags } from "./findProjectFlag.repository"
 
 export async function refreshFlagsCacheSafe(
   projectId: string,
-  page: number,
-  limit: number
+  limit: number,
+  cursor?: string
 ) {
+
   const cacheKey =
-    `project:flags:${projectId}:page:${page}:limit:${limit}`
+    `project:flags:${projectId}:cursor:${cursor ?? "start"}:limit:${limit}`
 
   const lockKey = `lock:${cacheKey}`
 
   let lockAcquired = false
 
   try {
+
     /* ---------------------------
-       1️⃣ Check TTL
+       1️⃣ Check Cache TTL
     ---------------------------- */
-    let ttl = -1
 
-    try {
-      ttl = await redis.ttl(cacheKey)
-    } catch (err) {
-      console.error("TTL check failed:", err)
-      return
-    }
+    const ttl = await redis.ttl(cacheKey)
 
-    // cache still fresh → skip refresh
+    // cache still fresh
     if (ttl > 60) return
 
     /* ---------------------------
        2️⃣ Acquire Redis Lock
     ---------------------------- */
-    try {
-      const lock = await redis.set(
-        lockKey,
-        "1",
-        "NX",   // only if not exists
-        "EX",   // auto expire
-        30
-      )
 
-      if (!lock) return // another worker refreshing
+    const lock = await redis.set(
+      lockKey,
+      "1",
+      "NX",
+      "EX",
+      30
+    )
 
-      lockAcquired = true
-    } catch (err) {
-      console.error("Lock acquire failed:", err)
-      return
-    }
+    if (!lock) return
+
+    lockAcquired = true
 
     /* ---------------------------
-       3️⃣ Fetch Fresh DB Data
+       3️⃣ Fetch Fresh Data
     ---------------------------- */
-    const skip = (page - 1) * limit
 
-    const { flags, totalCount } =
-      await findProjectFlags(projectId, skip, limit)
-
-    const totalPages = Math.ceil(totalCount / limit)
+    const { flags, hasMore, nextCursor } =
+      await findProjectFlags(projectId, limit, cursor)
 
     const result = {
       data: flags,
-      page,
-      totalPages,
-      totalCount,
+      nextCursor,
+      hasMore,
     }
 
     /* ---------------------------
-       4️⃣ Update Cache
+       4️⃣ Update Cache (PIPELINE)
     ---------------------------- */
-    await redis.set(
+
+    const pipeline = redis.pipeline()
+
+    pipeline.set(
       cacheKey,
       JSON.stringify(result),
       "EX",
       300
     )
 
+    // optional: store metadata
+    // pipeline.set(
+    //   `project:flags:${projectId}:meta`,
+    //   JSON.stringify({
+    //     lastRefresh: Date.now(),
+    //   }),
+    //   "EX",
+    //   300
+    // )
+
+    await pipeline.exec()
+
   } catch (err) {
+
     console.error("refreshFlagsCacheSafe error:", err)
+
   } finally {
 
     /* ---------------------------
        5️⃣ Release Lock
     ---------------------------- */
+
     if (lockAcquired) {
       try {
         await redis.del(lockKey)
@@ -90,5 +96,6 @@ export async function refreshFlagsCacheSafe(
         console.error("Lock release failed:", err)
       }
     }
+
   }
 }

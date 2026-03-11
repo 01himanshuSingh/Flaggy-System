@@ -1,8 +1,13 @@
-import React from 'react'
+'use client'
+import { FlagsDashboard } from './flagDashboard/FlagDashboard'
+import { useParams } from 'next/navigation'
 
 function page() {
+  const {projectId} = useParams();
   return (
-    <div>page</div>
+    <div>
+      <FlagsDashboard projectId={projectId}/>
+      </div>
   )
 }
 

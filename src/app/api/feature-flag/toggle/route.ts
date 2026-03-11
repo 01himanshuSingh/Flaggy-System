@@ -1,10 +1,24 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/hook/server/useUser";
-import { withRedisLock } from "@/lib/feature/togglefeatures/redislocktoggle";
-import { invalidateFeatureCache } from "@/lib/feature/cacheInvalidation";
-import { resetEvaluationMetrics } from "@/lib/feature/togglefeatures/resetEvaluationToggleMetrics";
-import { logFeatureToggle } from "@/lib/feature/togglefeatures/auditlogtoggle";
-import { toggleFeatureFlag } from "@/lib/feature/togglefeatures/togglefeatureFlag";
+import { withRedisLock } from "@/lib/hook/server/feature/togglefeatures/redislocktoggle";
+import { toggleFeatureFlag } from "@/lib/hook/server/feature/togglefeatures/togglefeatureFlag";
+import { invalidateFeatureCache } from "@/lib/hook/server/feature/cacheInvalidation";
+import { resetEvaluationMetrics } from "@/lib/hook/server/feature/togglefeatures/resetEvaluationToggleMetrics";
+import { logFeatureToggle } from "@/lib/hook/server/feature/togglefeatures/auditlogtoggle";
+
+import { z } from "zod";
+
+const toggleSchema = z.object({
+  featureFlagId: z.string().uuid(),
+  projectId: z.string(),
+  flagKey: z.string(),
+  environmentType: z.enum(["PRODUCTION"
+  ,"STAGING",
+  "DEVELOPMENT"]),
+  enabled: z.boolean(),
+  rollout: z.number().min(0).max(100).nullable(),
+  reason: z.string().optional(),
+});
 
 export async function POST(req: Request) {
   try {
@@ -13,20 +27,28 @@ export async function POST(req: Request) {
     if (!session) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
+const body = await req.json();
 
-    const body = await req.json();
+const parsed = toggleSchema.safeParse(body);
 
-    const {
-      featureFlagId,
-      projectId,
-      flagKey,
-      environmentType,
-      enabled,
-      rollout,
-      reason,
-    } = body;
+if (!parsed.success) {
+  return NextResponse.json(
+    { message: "Invalid payload", errors: parsed.error.flatten() },
+    { status: 400 }
+  );
+}
 
-    if (!featureFlagId || !environmentType) {
+const {
+  featureFlagId,
+  projectId,
+  flagKey,
+  environmentType,
+  enabled,
+  rollout,
+  reason,
+} = parsed.data;
+
+if (!featureFlagId || !environmentType) {
       return NextResponse.json(
         { message: "Invalid payload" },
         { status: 400 }

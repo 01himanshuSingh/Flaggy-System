@@ -1,36 +1,40 @@
 import redis from "@/lib/redis"
 import { findProjectFlags } from "./findProjectFlag.repository"
+
 export async function prefetchNextFlagsPage(
   projectId: string,
-  nextPage: number,
   limit: number,
-  totalPages: number
+  cursor: string
 ) {
   try {
-    // stop if no next page
-    if (nextPage > totalPages) return
 
-    const cacheKey =
-      `project:flags:${projectId}:page:${nextPage}:limit:${limit}`
+    const cacheKey = `project:flags:${projectId}:cursor:${cursor}:limit:${limit}`
 
-    // already cached → skip
-    const exists = await redis.exists(cacheKey)
-    if (exists) return
+    const cached = await redis.get(cacheKey)
 
-    const skip = (nextPage - 1) * limit
+    if (cached) return
 
-    const { flags, totalCount } =
-      await findProjectFlags(projectId, skip, limit)
+    const { flags, hasMore, nextCursor } =
+      await findProjectFlags(projectId, limit, cursor)
+
+    if (!flags.length) return
 
     const result = {
       data: flags,
-      page: nextPage,
-      totalPages,
-      totalCount,
+      nextCursor,
+      hasMore,
     }
 
-    // cache next page
-    await redis.set(cacheKey, JSON.stringify(result), "EX", 300)
+    const pipeline = redis.pipeline()
+
+    pipeline.set(
+      cacheKey,
+      JSON.stringify(result),
+      "EX",
+      300
+    )
+
+    await pipeline.exec()
 
   } catch (err) {
     console.error("Prefetch failed:", err)

@@ -2,55 +2,50 @@ import { prisma } from "@/lib/prisma"
 
 export async function findProjectFlags(
   projectId: string,
-  skip: number,
-  limit: number
+  limit: number,
+  cursor?: string
 ) {
-  const [flags, totalCount] = await Promise.all([
 
-    prisma.featureFlag.findMany({
-      where: {
-        projectId,
-        archived: false,
-      },
+  const flags = await prisma.featureFlag.findMany({
+    where: {
+      projectId,
+    },
 
-      orderBy: {
-        createdAt: "desc",
-      },
+    orderBy: {
+      createdAt: "desc",
+    },
 
-      skip,
-      take: limit,
+    ...(cursor && {
+      cursor: { id: cursor },
+      skip: 1, // skip the cursor itself
+    }),
 
-      // 🔥 ONLY REQUIRED FIELDS
-      select: {
-        id: true,
-        key: true,
-        valueType: true,
-        
+    take: limit + 1,
 
-        environments: {
-          select: {
-            enabled: true,
-
-            environment: {
-              select: {
-                name: true,   // dev / prod / staging
-              },
-            },
-          },
+    select: {
+      id: true,
+      key: true,
+      valueType: true,
+      lifecycle: true,
+      description: true,
+      createdAt: true,
+      createdBy: {
+        select: {
+          name: true,
         },
       },
-    }),
+    },
+  })
 
-    prisma.featureFlag.count({
-      where: {
-        projectId,
-        archived: false,
-      },
-    }),
-  ])
+  const hasMore = flags.length > limit
+
+  const data = hasMore ? flags.slice(0, limit) : flags
+
+  const nextCursor = hasMore ? data[data.length - 1].id : null
 
   return {
-    flags,
-    totalCount,
+    flags: data,
+    hasMore,
+    nextCursor,
   }
 }

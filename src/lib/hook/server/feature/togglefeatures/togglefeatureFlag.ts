@@ -31,18 +31,19 @@ export async function toggleFeatureFlag({
     });
 
     if (!feature) {
-      return NextResponse.json({ message: "Feature flag not found" }, { status: 404 });
-    }
+  throw new Error("FEATURE_FLAG_NOT_FOUND");
+}
+
 
     /* 2️⃣ Find environment config */
     const envConfig = feature.environments.find(
       (e) => e.environment.type === environmentType
     );
 
-    if (!envConfig) {
-      return NextResponse.json({ message: "Environment config not found" }, { status: 404 });
-    }
-
+   
+if (!envConfig) {
+  throw new Error("ENVIRONMENT_CONFIG_NOT_FOUND");
+}
     /* 3️⃣ Update environment state */
     const updatedEnv = await tx.featureFlagEnvironment.update({
       where: { id: envConfig.id },

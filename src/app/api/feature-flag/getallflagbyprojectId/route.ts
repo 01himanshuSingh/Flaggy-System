@@ -6,6 +6,7 @@ import { getProjectFlagsPaginated } from "@/lib/hook/server/getfeatureflagprojec
 
 export async function GET(req: NextRequest) {
   try {
+
     /* -------------------------
        1️⃣ Auth Check
     -------------------------- */
@@ -21,10 +22,11 @@ export async function GET(req: NextRequest) {
     /* -------------------------
        2️⃣ Read Query Params
     -------------------------- */
+
     const { searchParams } = new URL(req.url)
 
     const projectId = searchParams.get("projectId")
-    const page = Number(searchParams.get("page") || 1)
+    const cursor = searchParams.get("cursor") || undefined
     const limit = Number(searchParams.get("limit") || 10)
 
     if (!projectId) {
@@ -37,24 +39,28 @@ export async function GET(req: NextRequest) {
     /* -------------------------
        3️⃣ Validate Access
     -------------------------- */
+
     await validateProjectAccess(user.id, projectId)
 
     /* -------------------------
-       4️⃣ Get Flags (Redis + DB)
+       4️⃣ Fetch Flags
     -------------------------- */
+
     const data = await getProjectFlagsPaginated(
       projectId,
-      page,
-      limit
+      limit,
+      cursor
     )
 
     /* -------------------------
-       5️⃣ Return Response
+       5️⃣ Response
     -------------------------- */
+
     return NextResponse.json(data)
 
   } catch (error: any) {
-    console.error(error)
+
+    console.error("Feature flag fetch error:", error)
 
     return NextResponse.json(
       { error: error.message || "Internal server error" },
