@@ -7,8 +7,11 @@ export async function withRedisLock<T>(
 ): Promise<T> {
   const lockKey = `lock:${key}`;
 
-  const acquired = await redis.set(lockKey, "1","NX", "EX", ttlSeconds);
-
+ const acquired = await redis.set(
+  lockKey,
+  "1",
+  { ex: ttlSeconds, nx: true } as any
+);
   if (!acquired) {
     throw new Error("OPERATION_IN_PROGRESS");
   }

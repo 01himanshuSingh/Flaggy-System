@@ -26,7 +26,11 @@ export async function refreshProjectsCacheSafe(
 
     // 2. Acquire lock safely
     try {
-      const lock = await redis.set(lockKey, "1", "NX", "EX", 30)
+      const lock = await redis.set(
+        lockKey,
+        "1",
+        { ex: 30, nx: true } as any
+      )
       if (!lock) return
       lockAcquired = true
     } catch (err) {
