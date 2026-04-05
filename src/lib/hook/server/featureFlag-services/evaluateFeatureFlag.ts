@@ -1,8 +1,10 @@
+// this is only for making the feature flag creation of flag 
+
 import redis from "@/lib/redis";
 import { getFlagVersion } from "./getFlagVersion";
-import { logEvaluation } from "@/lib/feature/evaluationLogger";
-import { evaluateRollout } from "@/lib/feature/rollutPercentage";
 import { getFlagConfig } from "./getFlagConfig";
+import { logEvaluation } from "../feature/evaluationLogger";
+import { evaluateRollout } from "../feature/rollutPercentage";
 
 type Params = {
   projectId: string;

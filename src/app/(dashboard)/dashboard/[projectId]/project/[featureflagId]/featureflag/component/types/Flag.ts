@@ -6,4 +6,5 @@ export type FlagStatus =
 
 export interface FlagHeaderProps {
   env: string;
+  flag: any;
 }

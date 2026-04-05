@@ -7,7 +7,7 @@ import NoProjectPage from "@/components/NoDataFound/NoProjectFound"
 export default async function DashboardPage() {
   const user = await getCurrentUser()
 
-  if (!user) redirect("/login")
+  if (!user) redirect("/signin")
 
   const project = await getUserFirstProject(user.id)
 

@@ -104,6 +104,8 @@ model Project {
   roles        ProjectRole[]
   environments Environment[]
   flags        FeatureFlag[]
+  integrationWebhook IntegrationWebhook[]
+  apiKey ApiKey[]
   @@index([ownerId])
    @@index([ownerId, createdAt])
 }
@@ -182,7 +184,8 @@ model Environment {
   project Project @relation(fields: [projectId], references: [id])
 
   featureSettings FeatureFlagEnvironment[]
-
+targetingRule TargetingRule[]
+apiKey ApiKey[]
   @@unique([type, projectId])
 }
 
@@ -218,7 +221,10 @@ model FeatureFlag {
   environments FeatureFlagEnvironment[]
   versions     FeatureFlagVersion[]
   FeatureExperiments FeatureExperiment[]
-
+targetingRule TargetingRule[]
+featureFlagVariation FeatureFlagVariation[]
+flagEvaluationCache FlagEvaluationCache[]
+featureFlagSchedule FeatureFlagSchedule[]
   @@unique([key, projectId])
 
   // ⭐ INDEXES (important)
@@ -285,6 +291,93 @@ model FeatureExperiment {
   name          String
   variants      Json
   enabled       Boolean @default(false)
+
+  featureFlag FeatureFlag @relation(fields: [featureFlagId], references: [id])
+}
+
+
+model TargetingRule {
+  id            String @id @default(uuid())
+  environmentId String
+  featureFlagId String
+
+  attribute     String
+  operator      String
+  value         Json   // 🔥 upgrade from String
+  variationId   String // ✅ ADD THIS
+
+  priority      Int
+
+  featureFlag FeatureFlag @relation(fields: [featureFlagId], references: [id], onDelete: Cascade)
+  environment Environment @relation(fields: [environmentId], references: [id], onDelete: Cascade)
+
+  @@index([featureFlagId])
+}
+
+model FeatureFlagVariation {
+  id            String @id @default(uuid())
+  featureFlagId String
+
+  name          String
+  value         Json
+  weight        Int
+
+  featureFlag FeatureFlag @relation(fields: [featureFlagId], references: [id], onDelete: Cascade)
+
+  @@index([featureFlagId])
+}
+
+model FlagEvaluationCache {
+  id            String @id @default(uuid())
+  featureFlagId String
+  environmentId String
+
+  payload       Json
+  updatedAt     DateTime @updatedAt
+
+  featureFlag FeatureFlag @relation(fields: [featureFlagId], references: [id])
+
+  @@unique([featureFlagId, environmentId])
+}
+
+model UserFlagAssignment {
+  id            String @id @default(uuid())
+  userKey       String
+  featureFlagId String
+  variationId   String
+
+  createdAt DateTime @default(now())
+
+  @@index([featureFlagId])
+}
+model IntegrationWebhook {
+  id        String @id @default(uuid())
+  projectId String
+  url       String
+  event     String
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id])
+}
+
+model ApiKey {
+  id            String @id @default(uuid())
+  projectId     String
+  environmentId String
+  key           String @unique
+  createdAt     DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id])
+  environment Environment @relation(fields: [environmentId], references: [id])
+}
+
+model FeatureFlagSchedule {
+  id            String @id @default(uuid())
+  featureFlagId String
+  environmentId String
+
+  enableAt  DateTime?
+  disableAt DateTime?
 
   featureFlag FeatureFlag @relation(fields: [featureFlagId], references: [id])
 }

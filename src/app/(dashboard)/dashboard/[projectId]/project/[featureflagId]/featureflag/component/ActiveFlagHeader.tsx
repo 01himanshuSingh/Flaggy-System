@@ -7,10 +7,10 @@ import { Card } from "./UI/Cards";
 import { Badge } from "./UI/Badge";
 import { Avatar } from "./UI/Avtar";
 
-export function ActiveFlagHeader({ env }: FlagHeaderProps) {
+export function ActiveFlagHeader({ env , flag }: FlagHeaderProps) {
   const [copied, setCopied] = useState(false);
 
-  const flagKey = "new-checkout-flow-v2";
+  const flagKey = flag?.flagKey || "unknown-flag-key";
 
   async function handleCopy() {
     await copyToClipboard(flagKey);
@@ -26,11 +26,11 @@ export function ActiveFlagHeader({ env }: FlagHeaderProps) {
         <div className="flex flex-col gap-3">
 
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-xl font-bold text-slate-900">
-              New Checkout Flow
+            <h1 className="text-xl font-bold text-slate-900 uppercase ">
+              {flagKey}
             </h1>
 
-            <Badge status="active" />
+            <Badge status={flag?.lifecycle} />
 
             <span className="rounded bg-indigo-50 border border-indigo-200 px-2 py-1 text-xs font-semibold text-indigo-700">
               {env}
@@ -60,14 +60,18 @@ export function ActiveFlagHeader({ env }: FlagHeaderProps) {
               Created
             </p>
             <p className="text-sm text-slate-600">
-              Apr 7, 2025
+              {new Date(flag?.createdAt).toLocaleDateString(undefined, {
+                year: "numeric",
+                month: "short",
+                day: "numeric"
+              })}
             </p>
           </div>
 
           <div className="flex items-center gap-2">
-            <Avatar initials="ER" color="#ec4899" size={28} />
+            {/* <Avatar initials={flag?.createdBy} color="#ec4899" size={28} /> */}
             <span className="text-sm font-semibold text-slate-700">
-              Emily Ross
+              {flag?.createdBy || "Unknown User"}
             </span>
           </div>
 

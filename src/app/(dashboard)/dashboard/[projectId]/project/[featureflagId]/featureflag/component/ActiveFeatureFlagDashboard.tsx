@@ -10,10 +10,18 @@ import { VariationsEditor } from "./VariationEditor";
 import { Variation } from "./types/variation";
 import { AuditHistory } from "./AuditHistory";
 import { RollbackSection } from "./RollbackSection";
+import { useActiveFlag } from "./hook/useActiveFlag";
 
 export default function ActiveFeatureFlagDashboard() {
   const [env, setEnv] = useState<Environment>("DEVELOPMENT");
+ const flagId = "0b93cd70-f3ea-45f0-a761-3e0a3721335b";
 
+  const { data, isLoading, error } = useActiveFlag(flagId, env);
+
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>Error loading flag</div>;
+
+  const flag = data?.data;
 const mockRollbackVersions = [
   {
     id: 4,
@@ -77,7 +85,7 @@ const mockVariations:Variation[] = [
 
       {/* Main content */}
       <div style={{ maxWidth: 860, margin: "24px auto", padding: "0 24px 48px" }}>
-        <ActiveFlagHeader env={env} />
+        <ActiveFlagHeader env={env} flag={flag}/>
         {/* <EnvironmentSelector env={env} setEnv={setEnv} />
         <ToggleSwitch env={env} />
         <RolloutSlider />

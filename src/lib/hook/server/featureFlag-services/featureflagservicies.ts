@@ -1,3 +1,6 @@
+// this is only for making the feature flag creation of flag 
+
+
 import { prisma } from "@/lib/prisma";
 import { auditLog } from "@/lib/audit";
 import { FeatureAlreadyExistsError } from "../serverError/FeatureAlreadyExistsError";
@@ -59,10 +62,19 @@ function buildInitialSnapshot(feature:any, environments:any[]) {
       data: environments.map(env => ({
         featureFlagId: feature.id,
         environmentId: env.id,
-        
-        enabled: false,
+        rollout: 0,
+        enabled: false
       })),
     });
+
+    await tx.featureFlagVariation.create({
+  data: {
+    featureFlagId: feature.id,
+    name: "control",
+    value: false, // default OFF
+    weight: 100,
+  },
+});
 
     const snapshot = buildInitialSnapshot(feature, environments);
 

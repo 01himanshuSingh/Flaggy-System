@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ChevronDown, Plus } from 'lucide-react'
 import { useProjects } from '@/lib/hook/useproject'
 import { useProjectContext } from './ProjectProvider'
@@ -21,21 +21,28 @@ export default function ProjectSwitcher() {
   const { projects, loading, error } = useProjects()
   const dispatch = useDispatch()
   const { selectedProject, setSelectedProject } = useProjectContext()
+  const router = useRouter()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const projectList = useMemo(() => projects, [projects])
-const router = useRouter()
+  if (!mounted) return null
   return (
     <div className="px-3 py-2 border-b">
 
       <DropdownMenu>
         {/* Trigger */}
         <DropdownMenuTrigger asChild>
-          <button className="flex items-center justify-between w-full bg-gray-50 px-3 py-2 rounded-md hover:bg-gray-100 transition">
+  <Button variant="ghost" className="w-full justify-between">
+
             <span className="text-sm">
               {selectedProject?.name || "Select Project"}
             </span>
             <ChevronDown size={16} />
-          </button>
+  </Button>
         </DropdownMenuTrigger>
 
         {/* Dropdown */}
