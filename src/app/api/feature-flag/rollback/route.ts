@@ -10,7 +10,9 @@ import { restoreFeatureEnvironmentConfig } from "@/lib/hook/server/feature/Rollb
 import { createFeatureVersionSnapshot } from "@/lib/hook/server/feature/RollbackFlag/createVersionSnapShot";
 import { logFeatureRollback } from "@/lib/hook/server/feature/RollbackFlag/featureRollbackaudit";
 import { invalidateFeatureCache } from "@/lib/hook/server/feature/RollbackFlag/rollbackInvalidation";
+import { Prisma } from "@prisma/client";
 
+type Tx = Prisma.TransactionClient;
 export async function POST(req: Request) {
   try {
     /* ---------------- AUTH ---------------- */
@@ -58,7 +60,7 @@ export async function POST(req: Request) {
       const snapshot = versionRecord.snapshot;
 
       /* ---------------- RESTORE STATE ---------------- */
-      await prisma.$transaction(async (tx) => {
+      await prisma.$transaction(async (tx:Tx) => {
 
         await restoreFeatureEnvironmentConfig(
           tx,
