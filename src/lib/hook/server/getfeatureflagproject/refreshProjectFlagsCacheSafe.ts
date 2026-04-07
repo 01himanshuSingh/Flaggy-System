@@ -31,7 +31,7 @@ export async function refreshFlagsCacheSafe(
 
     const lock = await redis.set(lockKey, "1", { nx: true, ex: 30 } as any)
 
-    if (!lock) return
+    if (!lock) return 
 
     lockAcquired = true
 

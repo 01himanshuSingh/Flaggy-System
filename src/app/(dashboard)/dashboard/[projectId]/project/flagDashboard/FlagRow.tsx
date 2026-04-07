@@ -3,6 +3,7 @@
 import { useState, memo, useMemo } from 'react';
 import { MoreVertical } from 'lucide-react';
 import { FeatureFlag } from './lib/types';
+import { useParams, useRouter } from 'next/navigation';
 
 interface FlagRowProps {
   flag: FeatureFlag;
@@ -34,7 +35,8 @@ const lifecycleConfig = {
 ================================ */
 export const FlagRow = memo(function FlagRow({ flag }: FlagRowProps) {
   const [showMenu, setShowMenu] = useState(false);
-
+const router = useRouter()
+const {projectId} = useParams()
   /* ---------- derived value ---------- */
   // const lifecycle = useMemo(
   //   () =>
@@ -66,7 +68,7 @@ export const FlagRow = memo(function FlagRow({ flag }: FlagRowProps) {
 
       {/* Name */}
       <td className="px-4 py-4">
-        <div className="min-w-[200px]">
+        <div className="min-w-[200px] hover:cursor-pointer " onClick={() => router.push(`/dashboard/${projectId}/project/${flag.id}/featureflag`)}>
           <p className="font-semibold text-slate-900">
             { flag.key}
           </p>

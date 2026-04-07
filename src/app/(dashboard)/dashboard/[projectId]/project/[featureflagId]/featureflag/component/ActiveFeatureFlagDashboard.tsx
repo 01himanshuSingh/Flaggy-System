@@ -97,7 +97,7 @@ const mockVariations:Variation[] = [
         env={env}
         setEnv={setEnv}
         />
-        <ToggleSwitch env={env}/>
+        <ToggleSwitch env={env} flag={flag}/>
         <RolloutSlider/>
         <TargetingRules  attributes={[
     "user.email",

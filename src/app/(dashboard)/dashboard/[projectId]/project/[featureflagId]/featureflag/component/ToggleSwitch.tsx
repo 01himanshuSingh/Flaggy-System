@@ -9,12 +9,15 @@ import { ProductionConfirm } from "./AlertDialogboxToggle"
 
 interface Props {
   env: Environment
+  flag: any
 }
 
-export const ToggleSwitch = memo(function ToggleSwitch({ env }: Props) {
+export const ToggleSwitch = memo(function ToggleSwitch({ env, flag }: Props) {
 
-  const [enabled, setEnabled] = useState(true)
   const [confirmOpen, setConfirmOpen] = useState(false)
+
+
+  const enabled = flag?.enabled ?? false
 
   const isProduction = env === "DEVELOPMENT"
 
@@ -24,14 +27,16 @@ export const ToggleSwitch = memo(function ToggleSwitch({ env }: Props) {
       return
     }
 
-    setEnabled(prev => !prev)
+    // 🔥 No mutation yet (read-only for now)
+    console.log("Toggle clicked")
   }
 
   function confirmToggle() {
-    setEnabled(prev => !prev)
+    console.log("Confirmed toggle")
     setConfirmOpen(false)
   }
 
+  
   return (
     <Card className="mb-6">
 
@@ -43,7 +48,6 @@ export const ToggleSwitch = memo(function ToggleSwitch({ env }: Props) {
 
       <CardContent className="flex flex-wrap items-center justify-between gap-4">
 
-        {/* Left info */}
         <div className="space-y-1">
           <p className="font-semibold text-slate-900">
             Feature Enabled
@@ -56,7 +60,6 @@ export const ToggleSwitch = memo(function ToggleSwitch({ env }: Props) {
           </p>
         </div>
 
-        {/* Right controls */}
         <div className="flex items-center gap-4">
 
           <span
